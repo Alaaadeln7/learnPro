@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  fullName  String
+  email     String    @unique
+  password  String
+  avatar    String?  @default("https://res.cloudinary.com/dmbysmbyz/image/upload/v1735715517/avatars/default-avatar.png.jpg")
+  bio       String?
+  role      Role
+  subject  Subject 
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  Course Course[]
+
+  Announcement Announcement[]
+}
+
+enum Role {
+  admin
+  student
+  instructor
+}
+
+enum Subject {
+  marketing
+  programming 
+  design
+  videoEditing
+}
+
+model Otp {
+  id        String       @id @default(uuid())
+  email     String
+  code      String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime  
+}
+model Course {
+  id                                Int       @id @default(autoincrement())
+  title                             String
+  thumbnail                         String
+  courseLevel                       CourseLevel
+  language                          Language
+  timeZone                          TimeZone
+  startDate                         DateTime
+  endDate                           DateTime
+  instructorBio                     String
+  description                       String
+  allowPersonliaze                   Boolean @default(false)
+  allAssignmentMustBeSubmited       Boolean @default(false)
+  allowStudentAttachFiles           Boolean @default(false)
+  allowStudentsCreateDiscussions    Boolean @default(false)
+  allowStudentsEditOrDelete         Boolean @default(false)
+  allowStudentOrganize             Boolean @default(false)
+  hideTotalsInStudentGradesSummary Boolean @default(false)
+  moudles                           Module[]
+  announcements                     Announcements[]
+  assignments                       Assignments[]
+  grades                            Json
+  Rubrics                           Json
+  students                          Json? 
+  rating                            Float? @default(0)
+  createdAt                         DateTime  @default(now())
+  instructorId                      Int
+  instructor                        User      @relation(fields: [instructorId], references: [id])
+
+}
+enum CourseLevel {
+  beginner
+  intermediate
+  advanced
+}
+enum Language {
+  english
+  arabic
+  french
+  spanish
+}
+enum TimeZone {
+  GMT
+  UTC
+  EST
+  PST
+}
+
+
+model Module {
+  id       Int      @id @default(autoincrement())
+  title    String
+  lessons  Lesson[] 
+  course   Course   @relation(fields: [courseId], references: [id])
+  courseId Int
+}
+
+model Lesson {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   
+  module    Module   @relation(fields: [moduleId], references: [id])
+  moduleId  Int
+}
+
+model Announcements {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   Announcement[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  Int @unique
+  course    Course   @relation(fields: [courseId], references: [id])
+}
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  createdAt DateTime @default(now())
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  announcementId Int
+  announcement Announcements @relation(fields: [announcementId], references: [id])
+}
+
+model Assignments {
+  id       String       @id @default(uuid())
+  completed Boolean
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  courseId    Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  quizs Quiz[]
+}
+model Quiz {
+  id              Int        @id @default(autoincrement())
+  title           String
+  dueDate         DateTime
+  timeLimit       Int        @default(0)
+  gradingMethod   String    
+  numberOfAttempts Int       @default(1)
+  description     String
+  shuffleQuestions Boolean  @default(false)
+  shuffleAnswer   Boolean   @default(false)
+  feedbackOptions Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  assignmentId    String
+  assignment      Assignments @relation(fields: [assignmentId], references: [id])
+  questions       Question[]
+}
+enum QuizType {
+  multipleChoice
+  trueFalse
+  fillInTheBlank
+  shortAnswer
+}
+model Question {
+  id        String       @id @default(uuid())
+  quizId    Int
+  quiz      Quiz      @relation(fields: [quizId], references: [id])
+  questionText   String
+  answers    String[]
+  correctAnswer String
+  type      QuizType
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum GradesMethod {
+  Percentage
+  PointsBased
+  RubricBased
+  CustomScale
+  WeightedAverage
+  GradeBands
+}
+
+
